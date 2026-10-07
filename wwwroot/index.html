@@ -105,6 +105,20 @@
           </div>
           <button class="btn btn-primary" data-action="create-employee">Добавить сотрудника</button>
         </div>
+        <div class="filter-bar">
+          <select id="employeeFormationFilter" class="form-select form-select-sm">
+            <option value="">Все формирования</option>
+          </select>
+          <select id="employeeUnitFilter" class="form-select form-select-sm">
+            <option value="">Все подразделения</option>
+          </select>
+          <select id="employeeStatusFilter" class="form-select form-select-sm">
+            <option value="">Все статусы</option>
+            <option value="Active">Активен</option>
+            <option value="Unavailable">Недоступен</option>
+            <option value="Excluded">Исключён</option>
+          </select>
+        </div>
         <div class="table-responsive">
           <table class="table align-middle mb-0">
             <thead><tr><th>Табельный №</th><th>ФИО</th><th>Должность</th><th>Подразделение</th><th>Статус</th><th></th></tr></thead>
@@ -122,6 +136,20 @@
             <div class="text-secondary small">Оснащение подразделений НФГО</div>
           </div>
           <button class="btn btn-primary" data-action="create-equipment">Добавить технику</button>
+        </div>
+        <div class="filter-bar">
+          <select id="equipmentFormationFilter" class="form-select form-select-sm">
+            <option value="">Все формирования</option>
+          </select>
+          <select id="equipmentUnitFilter" class="form-select form-select-sm">
+            <option value="">Все подразделения</option>
+          </select>
+          <select id="equipmentConditionFilter" class="form-select form-select-sm">
+            <option value="">Любое состояние</option>
+            <option value="Good">Исправно</option>
+            <option value="RequiresRepair">Требует ремонта</option>
+            <option value="Unusable">Непригодно</option>
+          </select>
         </div>
         <div class="table-responsive">
           <table class="table align-middle mb-0">
@@ -166,6 +194,21 @@
           <button type="submit" class="btn btn-primary">Сохранить</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="detailsModalTitle" class="modal-title fs-5">Карточка формирования</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div id="detailsModalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+      </div>
     </div>
   </div>
 </div>

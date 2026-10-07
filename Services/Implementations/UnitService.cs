@@ -42,7 +42,7 @@ public class UnitService : IUnitService
         var entity = new Unit
         {
             FormationId = dto.FormationId,
-            Name = dto.Name.Trim(),
+            Name = RequireText(dto.Name, "Unit name"),
             Purpose = Normalize(dto.Purpose),
             LeaderName = Normalize(dto.LeaderName)
         };
@@ -59,7 +59,7 @@ public class UnitService : IUnitService
         await EnsureFormationExistsAsync(dto.FormationId);
 
         entity.FormationId = dto.FormationId;
-        entity.Name = dto.Name.Trim();
+        entity.Name = RequireText(dto.Name, "Unit name");
         entity.Purpose = Normalize(dto.Purpose);
         entity.LeaderName = Normalize(dto.LeaderName);
 
@@ -85,6 +85,14 @@ public class UnitService : IUnitService
     {
         if (!await formationRepository.ExistsAsync(id))
             throw new NotFoundException($"Formation with id {id} was not found.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} cannot be empty.");
+
+        return value.Trim();
     }
 
     private static string? Normalize(string? value) =>

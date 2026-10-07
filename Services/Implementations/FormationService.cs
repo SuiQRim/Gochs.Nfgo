@@ -42,12 +42,15 @@ public class FormationService : IFormationService
 
     public async Task<FormationDto> CreateAsync(CreateFormationDto dto)
     {
+        var name = RequireText(dto.Name, "Formation name");
+        var location = RequireText(dto.Location, "Formation location");
+
         var entity = new Formation
         {
-            Name = dto.Name.Trim(),
+            Name = name,
             Type = dto.Type!.Value,
             Purpose = Normalize(dto.Purpose),
-            Location = dto.Location.Trim(),
+            Location = location,
             LeaderName = Normalize(dto.LeaderName)
         };
 
@@ -60,10 +63,10 @@ public class FormationService : IFormationService
         var entity = await formationRepository.GetByIdAsync(id)
             ?? throw new NotFoundException($"Formation with id {id} was not found.");
 
-        entity.Name = dto.Name.Trim();
+        entity.Name = RequireText(dto.Name, "Formation name");
         entity.Type = dto.Type!.Value;
         entity.Purpose = Normalize(dto.Purpose);
-        entity.Location = dto.Location.Trim();
+        entity.Location = RequireText(dto.Location, "Formation location");
         entity.LeaderName = Normalize(dto.LeaderName);
         entity.Status = dto.Status!.Value;
 
@@ -83,6 +86,14 @@ public class FormationService : IFormationService
             throw new BusinessRuleException("Formation cannot be deleted while it has notification history.");
 
         await formationRepository.DeleteAsync(entity);
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} cannot be empty.");
+
+        return value.Trim();
     }
 
     private static string? Normalize(string? value) =>

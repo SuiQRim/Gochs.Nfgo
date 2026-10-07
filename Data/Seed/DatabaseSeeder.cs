@@ -83,11 +83,12 @@ public static class DatabaseSeeder
             new Employee { PersonnelNumber = "NFGO-007", FullName = "Сотрудник 007", Position = "Фельдшер", Unit = medicalUnit });
 
         context.Equipment.AddRange(
-            new Equipment { Name = "Комплект спасательного инструмента", Type = EquipmentType.Rescue, InventoryNumber = "NFGO-EQ-001", Quantity = 3, Condition = EquipmentCondition.Good, Unit = rescueUnit },
-            new Equipment { Name = "Гидравлический инструмент", Type = EquipmentType.Rescue, InventoryNumber = "NFGO-EQ-002", Quantity = 2, Condition = EquipmentCondition.RequiresRepair, Unit = engineeringUnit },
-            new Equipment { Name = "Дизельный генератор", Type = EquipmentType.Other, InventoryNumber = "NFGO-EQ-003", Quantity = 2, Condition = EquipmentCondition.RequiresRepair, Unit = powerUnit },
-            new Equipment { Name = "Медицинская укладка", Type = EquipmentType.Medical, InventoryNumber = "NFGO-EQ-004", Quantity = 3, Condition = EquipmentCondition.Good, Unit = medicalUnit },
-            new Equipment { Name = "Радиостанция переносная", Type = EquipmentType.Communication, InventoryNumber = "NFGO-EQ-005", Quantity = 6, Condition = EquipmentCondition.Unusable, Unit = rescueUnit });
+            new Equipment { Name = "Комплект спасательного инструмента", Type = EquipmentType.Rescue, Quantity = 3, Condition = EquipmentCondition.Good, Unit = rescueUnit },
+            new Equipment { Name = "Гидравлический инструмент", Type = EquipmentType.Rescue, Quantity = 2, Condition = EquipmentCondition.RequiresRepair, Unit = engineeringUnit },
+            new Equipment { Name = "Дизельный генератор", Type = EquipmentType.Other, Quantity = 2, Condition = EquipmentCondition.RequiresRepair, Unit = powerUnit },
+            new Equipment { Name = "Медицинская укладка", Type = EquipmentType.Medical, Quantity = 3, Condition = EquipmentCondition.Good, Unit = medicalUnit },
+            new Equipment { Name = "Радиостанция переносная", Type = EquipmentType.Communication, Quantity = 5, Condition = EquipmentCondition.Unusable, Unit = rescueUnit },
+            new Equipment { Name = "Автомобиль УАЗ", Type = EquipmentType.Vehicle, InventoryNumber = "NFGO-EQ-001", Quantity = 1, Condition = EquipmentCondition.Unusable, Unit = rescueUnit });
 
         context.Notifications.AddRange(
             new Notification { Formation = rescue, Message = "Проверка готовности формирования.", CreatedBy = "Дежурный ГО", Status = NotificationStatus.Sent },

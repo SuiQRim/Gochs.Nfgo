@@ -26,6 +26,7 @@ public class ExceptionHandlingMiddleware
         {
             var statusCode = exception switch
             {
+                ValidationException => StatusCodes.Status400BadRequest,
                 NotFoundException => StatusCodes.Status404NotFound,
                 BusinessRuleException => StatusCodes.Status409Conflict,
                 _ => StatusCodes.Status500InternalServerError
@@ -44,6 +45,7 @@ public class ExceptionHandlingMiddleware
                 status = statusCode,
                 title = statusCode switch
                 {
+                    StatusCodes.Status400BadRequest => "Validation error.",
                     StatusCodes.Status404NotFound => "Resource not found.",
                     StatusCodes.Status409Conflict => "Business rule violation.",
                     _ => "An unexpected error occurred."

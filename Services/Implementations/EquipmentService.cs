@@ -49,7 +49,10 @@ public class EquipmentService : IEquipmentService
     public async Task<EquipmentDto> CreateAsync(CreateEquipmentDto dto)
     {
         await EnsureUnitExistsAsync(dto.UnitId);
+
+        var name = RequireText(dto.Name, "Equipment name");
         var inventoryNumber = Normalize(dto.InventoryNumber);
+        ValidateInventoryQuantity(inventoryNumber, dto.Quantity);
 
         if (inventoryNumber is not null &&
             await equipmentRepository.InventoryNumberExistsAsync(inventoryNumber))
@@ -60,7 +63,7 @@ public class EquipmentService : IEquipmentService
         var entity = new Equipment
         {
             UnitId = dto.UnitId,
-            Name = dto.Name.Trim(),
+            Name = name,
             Type = dto.Type!.Value,
             InventoryNumber = inventoryNumber,
             Quantity = dto.Quantity
@@ -76,7 +79,10 @@ public class EquipmentService : IEquipmentService
             ?? throw new NotFoundException($"Equipment with id {id} was not found.");
 
         await EnsureUnitExistsAsync(dto.UnitId);
+
+        var name = RequireText(dto.Name, "Equipment name");
         var inventoryNumber = Normalize(dto.InventoryNumber);
+        ValidateInventoryQuantity(inventoryNumber, dto.Quantity);
 
         if (inventoryNumber is not null &&
             await equipmentRepository.InventoryNumberExistsAsync(inventoryNumber, id))
@@ -85,7 +91,7 @@ public class EquipmentService : IEquipmentService
         }
 
         entity.UnitId = dto.UnitId;
-        entity.Name = dto.Name.Trim();
+        entity.Name = name;
         entity.Type = dto.Type!.Value;
         entity.InventoryNumber = inventoryNumber;
         entity.Quantity = dto.Quantity;
@@ -103,6 +109,12 @@ public class EquipmentService : IEquipmentService
         await equipmentRepository.DeleteAsync(entity);
     }
 
+    private static void ValidateInventoryQuantity(string? inventoryNumber, int quantity)
+    {
+        if (inventoryNumber is not null && quantity != 1)
+            throw new ValidationException("Equipment with an inventory number must have quantity equal to 1.");
+    }
+
     private async Task EnsureUnitExistsAsync(int id)
     {
         if (!await unitRepository.ExistsAsync(id))
@@ -113,6 +125,14 @@ public class EquipmentService : IEquipmentService
     {
         if (!await formationRepository.ExistsAsync(id))
             throw new NotFoundException($"Formation with id {id} was not found.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} cannot be empty.");
+
+        return value.Trim();
     }
 
     private static string? Normalize(string? value) =>

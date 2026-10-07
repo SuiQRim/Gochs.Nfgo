@@ -49,7 +49,10 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeDto> CreateAsync(CreateEmployeeDto dto)
     {
         await EnsureUnitExistsAsync(dto.UnitId);
-        var personnelNumber = dto.PersonnelNumber.Trim();
+
+        var personnelNumber = RequireText(dto.PersonnelNumber, "Personnel number");
+        var fullName = RequireText(dto.FullName, "Employee full name");
+        var position = RequireText(dto.Position, "Employee position");
 
         if (await employeeRepository.PersonnelNumberExistsAsync(personnelNumber))
             throw new BusinessRuleException($"Personnel number '{personnelNumber}' is already in use.");
@@ -58,8 +61,8 @@ public class EmployeeService : IEmployeeService
         {
             UnitId = dto.UnitId,
             PersonnelNumber = personnelNumber,
-            FullName = dto.FullName.Trim(),
-            Position = dto.Position.Trim(),
+            FullName = fullName,
+            Position = position,
             Phone = Normalize(dto.Phone)
         };
 
@@ -73,15 +76,18 @@ public class EmployeeService : IEmployeeService
             ?? throw new NotFoundException($"Employee with id {id} was not found.");
 
         await EnsureUnitExistsAsync(dto.UnitId);
-        var personnelNumber = dto.PersonnelNumber.Trim();
+
+        var personnelNumber = RequireText(dto.PersonnelNumber, "Personnel number");
+        var fullName = RequireText(dto.FullName, "Employee full name");
+        var position = RequireText(dto.Position, "Employee position");
 
         if (await employeeRepository.PersonnelNumberExistsAsync(personnelNumber, id))
             throw new BusinessRuleException($"Personnel number '{personnelNumber}' is already in use.");
 
         entity.UnitId = dto.UnitId;
         entity.PersonnelNumber = personnelNumber;
-        entity.FullName = dto.FullName.Trim();
-        entity.Position = dto.Position.Trim();
+        entity.FullName = fullName;
+        entity.Position = position;
         entity.Phone = Normalize(dto.Phone);
         entity.Status = dto.Status!.Value;
 
@@ -107,6 +113,14 @@ public class EmployeeService : IEmployeeService
     {
         if (!await formationRepository.ExistsAsync(id))
             throw new NotFoundException($"Formation with id {id} was not found.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} cannot be empty.");
+
+        return value.Trim();
     }
 
     private static string? Normalize(string? value) =>

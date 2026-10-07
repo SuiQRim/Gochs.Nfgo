@@ -45,8 +45,8 @@ public class NotificationService : INotificationService
         var entity = new Notification
         {
             FormationId = dto.FormationId,
-            Message = dto.Message.Trim(),
-            CreatedBy = dto.CreatedBy.Trim()
+            Message = RequireText(dto.Message, "Notification message"),
+            CreatedBy = RequireText(dto.CreatedBy, "Notification author")
         };
 
         await notificationRepository.AddAsync(entity);
@@ -76,5 +76,13 @@ public class NotificationService : INotificationService
     {
         if (!await formationRepository.ExistsAsync(id))
             throw new NotFoundException($"Formation with id {id} was not found.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} cannot be empty.");
+
+        return value.Trim();
     }
 }

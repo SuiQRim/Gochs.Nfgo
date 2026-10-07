@@ -23,7 +23,8 @@ document.querySelectorAll("[data-page]").forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
-document.getElementById("refreshButton").addEventListener("click", loadAll);
+const refreshButton = document.getElementById("refreshButton");
+refreshButton.addEventListener("click", () => loadAll(true));
 document.addEventListener("click", handleAction);
 form.addEventListener("submit", submitModal);
 
@@ -48,7 +49,12 @@ function showPage(name) {
   document.getElementById("pageSubtitle").textContent = pages[name][1];
 }
 
-async function loadAll() {
+async function loadAll(showFeedback = false) {
+  if (showFeedback) {
+    refreshButton.disabled = true;
+    refreshButton.textContent = "Обновление...";
+  }
+
   try {
     const [dashboard, formations, units, employees, equipment, notifications] = await Promise.all([
       api("/api/dashboard"),
@@ -66,8 +72,17 @@ async function loadAll() {
     renderEmployees();
     renderEquipment();
     renderNotifications();
+
+    if (showFeedback) {
+      toast("Данные обновлены");
+    }
   } catch (error) {
     toast(error.message, true);
+  } finally {
+    if (showFeedback) {
+      refreshButton.disabled = false;
+      refreshButton.textContent = "Обновить";
+    }
   }
 }
 
@@ -238,7 +253,7 @@ function openEditor(type, id = null) {
   form.dataset.type = type;
   form.dataset.id = id || "";
   document.getElementById("modalTitle").textContent = `${id ? "Изменить" : "Добавить"}: ${entityTitle(type)}`;
-  document.getElementById("modalBody").innerHTML = editorFields(type, entity);
+  document.getElementById("modalBody").innerHTML = editorFields(type, entity ?? {});
   entityModal.show();
 }
 

@@ -1,11 +1,14 @@
+using System.Reflection;
 using System.Text.Json.Serialization;
 using Gochs.Nfgo.Data;
 using Gochs.Nfgo.Data.Seed;
+using Gochs.Nfgo.DTOs.Common;
 using Gochs.Nfgo.Exceptions;
 using Gochs.Nfgo.Repositories.Implementations;
 using Gochs.Nfgo.Repositories.Interfaces;
 using Gochs.Nfgo.Services.Implementations;
 using Gochs.Nfgo.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,8 +19,37 @@ builder.Services
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter(allowIntegerValues: false)));
 
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var detail = string.Join(
+            " ",
+            context.ModelState.Values
+                .SelectMany(x => x.Errors)
+                .Select(x => x.ErrorMessage)
+                .Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        return new BadRequestObjectResult(new ErrorResponseDto
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = "Ошибка валидации.",
+            Detail = string.IsNullOrWhiteSpace(detail)
+                ? "Переданы некорректные данные."
+                : detail
+        });
+    };
+});
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+var xmlFileName = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+var xmlFilePath = Path.Combine(AppContext.BaseDirectory, xmlFileName);
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.IncludeXmlComments(xmlFilePath);
+});
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));

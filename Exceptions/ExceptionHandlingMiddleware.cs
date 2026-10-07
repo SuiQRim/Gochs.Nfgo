@@ -1,3 +1,5 @@
+using Gochs.Nfgo.DTOs.Common;
+
 namespace Gochs.Nfgo.Exceptions;
 
 public class ExceptionHandlingMiddleware
@@ -40,17 +42,17 @@ public class ExceptionHandlingMiddleware
             context.Response.StatusCode = statusCode;
             context.Response.ContentType = "application/json";
 
-            var response = new
+            var response = new ErrorResponseDto
             {
-                status = statusCode,
-                title = statusCode switch
+                Status = statusCode,
+                Title = statusCode switch
                 {
                     StatusCodes.Status400BadRequest => "Ошибка валидации.",
                     StatusCodes.Status404NotFound => "Ресурс не найден.",
                     StatusCodes.Status409Conflict => "Нарушено бизнес-правило.",
                     _ => "Произошла внутренняя ошибка."
                 },
-                detail = statusCode == StatusCodes.Status500InternalServerError && !environment.IsDevelopment()
+                Detail = statusCode == StatusCodes.Status500InternalServerError && !environment.IsDevelopment()
                     ? "Внутренняя ошибка сервера"
                     : exception.Message
             };

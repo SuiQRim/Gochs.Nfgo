@@ -41,7 +41,7 @@ public class EquipmentService : IEquipmentService
     public async Task<EquipmentDto> GetByIdAsync(int id)
     {
         var entity = await equipmentRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Equipment with id {id} was not found.");
+            ?? throw new NotFoundException($"Техника/имущество с id {id} не найдены.");
 
         return entity.ToDto();
     }
@@ -50,14 +50,14 @@ public class EquipmentService : IEquipmentService
     {
         await EnsureUnitExistsAsync(dto.UnitId);
 
-        var name = RequireText(dto.Name, "Equipment name");
+        var name = RequireText(dto.Name, "Наименование техники/имущества");
         var inventoryNumber = Normalize(dto.InventoryNumber);
         ValidateInventoryQuantity(inventoryNumber, dto.Quantity);
 
         if (inventoryNumber is not null &&
             await equipmentRepository.InventoryNumberExistsAsync(inventoryNumber))
         {
-            throw new BusinessRuleException($"Inventory number '{inventoryNumber}' is already in use.");
+            throw new BusinessRuleException($"Инвентарный номер '{inventoryNumber}' уже используется.");
         }
 
         var entity = new Equipment
@@ -76,18 +76,18 @@ public class EquipmentService : IEquipmentService
     public async Task<EquipmentDto> UpdateAsync(int id, UpdateEquipmentDto dto)
     {
         var entity = await equipmentRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Equipment with id {id} was not found.");
+            ?? throw new NotFoundException($"Техника/имущество с id {id} не найдены.");
 
         await EnsureUnitExistsAsync(dto.UnitId);
 
-        var name = RequireText(dto.Name, "Equipment name");
+        var name = RequireText(dto.Name, "Наименование техники/имущества");
         var inventoryNumber = Normalize(dto.InventoryNumber);
         ValidateInventoryQuantity(inventoryNumber, dto.Quantity);
 
         if (inventoryNumber is not null &&
             await equipmentRepository.InventoryNumberExistsAsync(inventoryNumber, id))
         {
-            throw new BusinessRuleException($"Inventory number '{inventoryNumber}' is already in use.");
+            throw new BusinessRuleException($"Инвентарный номер '{inventoryNumber}' уже используется.");
         }
 
         entity.UnitId = dto.UnitId;
@@ -104,7 +104,7 @@ public class EquipmentService : IEquipmentService
     public async Task DeleteAsync(int id)
     {
         var entity = await equipmentRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Equipment with id {id} was not found.");
+            ?? throw new NotFoundException($"Техника/имущество с id {id} не найдены.");
 
         await equipmentRepository.DeleteAsync(entity);
     }
@@ -112,25 +112,25 @@ public class EquipmentService : IEquipmentService
     private static void ValidateInventoryQuantity(string? inventoryNumber, int quantity)
     {
         if (inventoryNumber is not null && quantity != 1)
-            throw new ValidationException("Equipment with an inventory number must have quantity equal to 1.");
+            throw new ValidationException("Для позиции с инвентарным номером количество должно быть равно 1.");
     }
 
     private async Task EnsureUnitExistsAsync(int id)
     {
         if (!await unitRepository.ExistsAsync(id))
-            throw new NotFoundException($"Unit with id {id} was not found.");
+            throw new NotFoundException($"Подразделение с id {id} не найдено.");
     }
 
     private async Task EnsureFormationExistsAsync(int id)
     {
         if (!await formationRepository.ExistsAsync(id))
-            throw new NotFoundException($"Formation with id {id} was not found.");
+            throw new NotFoundException($"Формирование с id {id} не найдено.");
     }
 
     private static string RequireText(string value, string fieldName)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ValidationException($"{fieldName} cannot be empty.");
+            throw new ValidationException($"{fieldName} не может быть пустым.");
 
         return value.Trim();
     }

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Gochs.Nfgo.Data;
+using Gochs.Nfgo.Data.Seed;
 using Gochs.Nfgo.Exceptions;
 using Gochs.Nfgo.Repositories.Implementations;
 using Gochs.Nfgo.Repositories.Interfaces;
@@ -34,6 +35,15 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    await context.Database.MigrateAsync();
+    await DatabaseSeeder.SeedAsync(context);
+}
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

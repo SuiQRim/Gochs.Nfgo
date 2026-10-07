@@ -9,6 +9,7 @@ const state = {
 const pages = {
   dashboard: ["Сводка", "Текущее состояние формирований НФГО"],
   formations: ["Формирования", "Структура формирований и подразделений"],
+  units: ["Подразделения", "Подразделения внутри формирований НФГО"],
   employees: ["Личный состав", "Учёт сотрудников НФГО"],
   equipment: ["Техника", "Оснащение подразделений"],
   notifications: ["Оповещения", "История и регистрация оповещений"]
@@ -61,6 +62,7 @@ async function loadAll() {
     Object.assign(state, { formations, units, employees, equipment, notifications });
     renderDashboard(dashboard);
     renderFormations();
+    renderUnits();
     renderEmployees();
     renderEquipment();
     renderNotifications();
@@ -135,6 +137,22 @@ function renderFormations() {
         </div></td>
       </tr>`).join("")
     : emptyRow(6);
+}
+
+function renderUnits() {
+  document.getElementById("unitsTable").innerHTML = state.units.length
+    ? state.units.map(x => `
+      <tr>
+        <td><strong>${escapeHtml(x.name)}</strong></td>
+        <td>${escapeHtml(formationName(x.formationId))}</td>
+        <td>${escapeHtml(x.purpose || "—")}</td>
+        <td>${escapeHtml(x.leaderName || "—")}</td>
+        <td><div class="action-buttons">
+          <button class="btn btn-sm btn-outline-primary" data-action="edit-unit" data-id="${x.id}">Изменить</button>
+          <button class="btn btn-sm btn-outline-danger" data-action="delete-unit" data-id="${x.id}">Удалить</button>
+        </div></td>
+      </tr>`).join("")
+    : emptyRow(5);
 }
 
 function renderEmployees() {
@@ -215,7 +233,8 @@ function handleAction(event) {
 }
 
 function openEditor(type, id = null) {
-  const entity = id ? state[type === "formation" ? "formations" : type === "employee" ? "employees" : "equipment"].find(x => x.id === id) : null;
+  const collection = type === "formation" ? "formations" : type === "unit" ? "units" : type === "employee" ? "employees" : "equipment";
+  const entity = id ? state[collection].find(x => x.id === id) : null;
   form.dataset.type = type;
   form.dataset.id = id || "";
   document.getElementById("modalTitle").textContent = `${id ? "Изменить" : "Добавить"}: ${entityTitle(type)}`;
@@ -224,7 +243,7 @@ function openEditor(type, id = null) {
 }
 
 function entityTitle(type) {
-  return ({ formation: "формирование", employee: "сотрудник", equipment: "техника", notification: "оповещение" })[type];
+  return ({ formation: "формирование", unit: "подразделение", employee: "сотрудник", equipment: "техника", notification: "оповещение" })[type];
 }
 
 function editorFields(type, x = {}) {
@@ -235,6 +254,12 @@ function editorFields(type, x = {}) {
     ${input("location", "Место расположения", x.location, true)}
     ${input("leaderName", "Руководитель", x.leaderName)}
     ${x.id ? select("status", "Статус", ["Ready","RequiresAttention","Inactive"], x.status, true) : ""}`;
+
+  if (type === "unit") return `
+    ${selectFrom("formationId", "Формирование", state.formations, x.formationId, true)}
+    ${input("name", "Название", x.name, true)}
+    ${input("purpose", "Назначение", x.purpose)}
+    ${input("leaderName", "Руководитель", x.leaderName)}`;
 
   if (type === "employee") return `
     ${selectFrom("unitId", "Подразделение", state.units, x.unitId, true)}
@@ -288,6 +313,7 @@ async function submitModal(event) {
   Object.keys(data).forEach(key => { if (data[key] === "") data[key] = null; });
 
   const endpoint = type === "formation" ? "/api/formations"
+    : type === "unit" ? "/api/units"
     : type === "employee" ? "/api/employees"
     : type === "equipment" ? "/api/equipment"
     : "/api/notifications";
@@ -308,6 +334,7 @@ async function submitModal(event) {
 async function removeEntity(type, id) {
   if (!confirm("Удалить запись?")) return;
   const endpoint = type === "formation" ? "/api/formations"
+    : type === "unit" ? "/api/units"
     : type === "employee" ? "/api/employees"
     : "/api/equipment";
 

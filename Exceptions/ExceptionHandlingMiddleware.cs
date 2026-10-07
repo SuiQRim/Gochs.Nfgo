@@ -45,13 +45,13 @@ public class ExceptionHandlingMiddleware
                 status = statusCode,
                 title = statusCode switch
                 {
-                    StatusCodes.Status400BadRequest => "Validation error.",
-                    StatusCodes.Status404NotFound => "Resource not found.",
-                    StatusCodes.Status409Conflict => "Business rule violation.",
-                    _ => "An unexpected error occurred."
+                    StatusCodes.Status400BadRequest => "Ошибка валидации.",
+                    StatusCodes.Status404NotFound => "Ресурс не найден.",
+                    StatusCodes.Status409Conflict => "Нарушено бизнес-правило.",
+                    _ => "Произошла внутренняя ошибка."
                 },
                 detail = statusCode == StatusCodes.Status500InternalServerError && !environment.IsDevelopment()
-                    ? "Internal server error"
+                    ? "Внутренняя ошибка сервера"
                     : exception.Message
             };
 

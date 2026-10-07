@@ -21,6 +21,7 @@
     <nav class="nav flex-column gap-1">
       <button class="nav-link active" data-page="dashboard">Сводка</button>
       <button class="nav-link" data-page="formations">Формирования</button>
+      <button class="nav-link" data-page="units">Подразделения</button>
       <button class="nav-link" data-page="employees">Личный состав</button>
       <button class="nav-link" data-page="equipment">Техника</button>
       <button class="nav-link" data-page="notifications">Оповещения</button>
@@ -72,6 +73,24 @@
           <table class="table align-middle mb-0">
             <thead><tr><th>Название</th><th>Тип</th><th>Руководитель</th><th>Место</th><th>Статус</th><th></th></tr></thead>
             <tbody id="formationsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-units" class="page">
+      <div class="panel">
+        <div class="panel-header d-flex justify-content-between align-items-center gap-3">
+          <div>
+            <h2 class="h5 mb-1">Подразделения</h2>
+            <div class="text-secondary small">Подразделения внутри формирований НФГО</div>
+          </div>
+          <button class="btn btn-primary" data-action="create-unit">Добавить подразделение</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Название</th><th>Формирование</th><th>Назначение</th><th>Руководитель</th><th></th></tr></thead>
+            <tbody id="unitsTable"></tbody>
           </table>
         </div>
       </div>

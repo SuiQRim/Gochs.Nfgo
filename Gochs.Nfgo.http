@@ -1,0 +1,6 @@
+@Gochs.Nfgo_HostAddress = http://localhost:5129
+
+GET {{Gochs.Nfgo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

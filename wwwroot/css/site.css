@@ -85,3 +85,46 @@ body {
   .main-content { margin-left: 0; width: 100%; padding: 20px; }
   .sidebar .nav { flex-direction: row !important; flex-wrap: wrap; }
 }
+
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+  background: #fafbfc;
+}
+
+.filter-bar .form-select {
+  width: auto;
+  min-width: 190px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.details-item {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.details-label {
+  color: var(--muted);
+  font-size: .78rem;
+  margin-bottom: 4px;
+}
+
+.details-section {
+  margin-top: 24px;
+}
+
+@media (max-width: 700px) {
+  .details-grid { grid-template-columns: 1fr; }
+  .filter-bar .form-select { width: 100%; }
+}

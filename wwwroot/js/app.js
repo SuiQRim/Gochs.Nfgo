@@ -17,7 +17,15 @@ const pages = {
 
 const modalElement = document.getElementById("entityModal");
 const entityModal = new bootstrap.Modal(modalElement);
+const detailsModal = new bootstrap.Modal(document.getElementById("detailsModal"));
 const form = document.getElementById("entityForm");
+
+const employeeFormationFilter = document.getElementById("employeeFormationFilter");
+const employeeUnitFilter = document.getElementById("employeeUnitFilter");
+const employeeStatusFilter = document.getElementById("employeeStatusFilter");
+const equipmentFormationFilter = document.getElementById("equipmentFormationFilter");
+const equipmentUnitFilter = document.getElementById("equipmentUnitFilter");
+const equipmentConditionFilter = document.getElementById("equipmentConditionFilter");
 
 document.querySelectorAll("[data-page]").forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.page));
@@ -27,6 +35,20 @@ const refreshButton = document.getElementById("refreshButton");
 refreshButton.addEventListener("click", () => loadAll(true));
 document.addEventListener("click", handleAction);
 form.addEventListener("submit", submitModal);
+
+employeeFormationFilter.addEventListener("change", () => {
+  updateUnitFilter(employeeUnitFilter, employeeFormationFilter.value);
+  renderEmployees();
+});
+employeeUnitFilter.addEventListener("change", renderEmployees);
+employeeStatusFilter.addEventListener("change", renderEmployees);
+
+equipmentFormationFilter.addEventListener("change", () => {
+  updateUnitFilter(equipmentUnitFilter, equipmentFormationFilter.value);
+  renderEquipment();
+});
+equipmentUnitFilter.addEventListener("change", renderEquipment);
+equipmentConditionFilter.addEventListener("change", renderEquipment);
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -66,6 +88,7 @@ async function loadAll(showFeedback = false) {
     ]);
 
     Object.assign(state, { formations, units, employees, equipment, notifications });
+    populateFilters();
     renderDashboard(dashboard);
     renderFormations();
     renderUnits();
@@ -147,6 +170,7 @@ function renderFormations() {
         <td>${escapeHtml(x.location)}</td>
         <td>${badge(x.status)}</td>
         <td><div class="action-buttons">
+          <button class="btn btn-sm btn-outline-secondary" data-action="details-formation" data-id="${x.id}">Карточка</button>
           <button class="btn btn-sm btn-outline-primary" data-action="edit-formation" data-id="${x.id}">Изменить</button>
           <button class="btn btn-sm btn-outline-danger" data-action="delete-formation" data-id="${x.id}">Удалить</button>
         </div></td>
@@ -171,8 +195,20 @@ function renderUnits() {
 }
 
 function renderEmployees() {
-  document.getElementById("employeesTable").innerHTML = state.employees.length
-    ? state.employees.map(x => `
+  const formationId = Number(employeeFormationFilter.value) || null;
+  const unitId = Number(employeeUnitFilter.value) || null;
+  const status = employeeStatusFilter.value;
+
+  const items = state.employees.filter(x => {
+    const unit = state.units.find(u => u.id === x.unitId);
+    if (formationId && unit?.formationId !== formationId) return false;
+    if (unitId && x.unitId !== unitId) return false;
+    if (status && x.status !== status) return false;
+    return true;
+  });
+
+  document.getElementById("employeesTable").innerHTML = items.length
+    ? items.map(x => `
       <tr>
         <td>${escapeHtml(x.personnelNumber)}</td>
         <td><strong>${escapeHtml(x.fullName)}</strong></td>
@@ -188,8 +224,20 @@ function renderEmployees() {
 }
 
 function renderEquipment() {
-  document.getElementById("equipmentTable").innerHTML = state.equipment.length
-    ? state.equipment.map(x => `
+  const formationId = Number(equipmentFormationFilter.value) || null;
+  const unitId = Number(equipmentUnitFilter.value) || null;
+  const condition = equipmentConditionFilter.value;
+
+  const items = state.equipment.filter(x => {
+    const unit = state.units.find(u => u.id === x.unitId);
+    if (formationId && unit?.formationId !== formationId) return false;
+    if (unitId && x.unitId !== unitId) return false;
+    if (condition && x.condition !== condition) return false;
+    return true;
+  });
+
+  document.getElementById("equipmentTable").innerHTML = items.length
+    ? items.map(x => `
       <tr>
         <td><strong>${escapeHtml(x.name)}</strong></td>
         <td>${typeLabel(x.type)}</td>
@@ -240,6 +288,7 @@ function handleAction(event) {
   const action = button.dataset.action;
   const id = Number(button.dataset.id);
 
+  if (action === "details-formation") return showFormationDetails(id);
   if (action.startsWith("create-")) return openEditor(action.slice(7));
   if (action.startsWith("edit-")) return openEditor(action.slice(5), id);
   if (action.startsWith("delete-")) return removeEntity(action.slice(7), id);
@@ -289,6 +338,7 @@ function editorFields(type, x = {}) {
     ${input("name", "Наименование", x.name, true)}
     ${select("type", "Тип", ["Vehicle","Communication","Rescue","Medical","Other"], x.type, true)}
     ${input("inventoryNumber", "Инвентарный номер", x.inventoryNumber)}
+    <div class="form-text mb-2">Если указан инвентарный номер, количество должно быть равно 1.</div>
     ${input("quantity", "Количество", x.quantity || 1, true, "number")}
     ${x.id ? select("condition", "Состояние", ["Good","RequiresRepair","Unusable"], x.condition, true) : ""}`;
 
@@ -299,7 +349,8 @@ function editorFields(type, x = {}) {
 }
 
 function input(name, label, value = "", required = false, type = "text") {
-  return `<div class="mb-3"><label class="form-label">${label}</label><input class="form-control" type="${type}" name="${name}" value="${escapeAttr(value ?? "")}" ${required ? "required" : ""}></div>`;
+  const min = name === "quantity" ? ' min="1"' : "";
+  return `<div class="mb-3"><label class="form-label">${label}</label><input class="form-control" type="${type}" name="${name}" value="${escapeAttr(value ?? "")}"${min} ${required ? "required" : ""}></div>`;
 }
 
 function select(name, label, values, selected, required = false) {
@@ -373,6 +424,105 @@ async function changeNotificationStatus(id, status) {
   } catch (error) {
     toast(error.message, true);
   }
+}
+
+function populateFilters() {
+  populateFormationFilter(employeeFormationFilter);
+  populateFormationFilter(equipmentFormationFilter);
+  updateUnitFilter(employeeUnitFilter, employeeFormationFilter.value);
+  updateUnitFilter(equipmentUnitFilter, equipmentFormationFilter.value);
+}
+
+function populateFormationFilter(selectElement) {
+  const selected = selectElement.value;
+  const firstOption = selectElement.options[0]?.outerHTML || '<option value="">Все формирования</option>';
+  selectElement.innerHTML = firstOption + state.formations
+    .map(x => `<option value="${x.id}">${escapeHtml(x.name)}</option>`)
+    .join("");
+  if ([...selectElement.options].some(x => x.value === selected)) selectElement.value = selected;
+}
+
+function updateUnitFilter(selectElement, formationValue) {
+  const selected = selectElement.value;
+  const formationId = Number(formationValue) || null;
+  const items = formationId
+    ? state.units.filter(x => x.formationId === formationId)
+    : state.units;
+
+  selectElement.innerHTML = '<option value="">Все подразделения</option>' + items
+    .map(x => `<option value="${x.id}">${escapeHtml(x.name)}</option>`)
+    .join("");
+
+  if ([...selectElement.options].some(x => x.value === selected)) selectElement.value = selected;
+}
+
+async function showFormationDetails(id) {
+  try {
+    const [formation, employees, equipment, notifications] = await Promise.all([
+      api(`/api/formations/${id}`),
+      api(`/api/formations/${id}/employees`),
+      api(`/api/formations/${id}/equipment`),
+      api(`/api/formations/${id}/notifications`)
+    ]);
+
+    document.getElementById("detailsModalTitle").textContent = formation.name;
+    document.getElementById("detailsModalBody").innerHTML = `
+      <div class="details-grid">
+        <div class="details-item"><div class="details-label">Тип</div><strong>${typeLabel(formation.type)}</strong></div>
+        <div class="details-item"><div class="details-label">Статус</div>${badge(formation.status)}</div>
+        <div class="details-item"><div class="details-label">Руководитель</div><strong>${escapeHtml(formation.leaderName || "—")}</strong></div>
+        <div class="details-item"><div class="details-label">Место расположения</div><strong>${escapeHtml(formation.location)}</strong></div>
+        <div class="details-item"><div class="details-label">Личный состав</div><strong>${formation.employeeCount}</strong></div>
+        <div class="details-item"><div class="details-label">Единицы техники/имущества</div><strong>${formation.equipmentCount}</strong></div>
+      </div>
+      <div class="details-section">
+        <h3 class="h6">Назначение</h3>
+        <p class="mb-0">${escapeHtml(formation.purpose || "Не указано")}</p>
+      </div>
+      <div class="details-section">
+        <h3 class="h6">Подразделения</h3>
+        ${simpleTable(["Название", "Назначение", "Руководитель"], formation.units.map(x => [
+          escapeHtml(x.name), escapeHtml(x.purpose || "—"), escapeHtml(x.leaderName || "—")
+        ]))}
+      </div>
+      <div class="details-section">
+        <h3 class="h6">Личный состав</h3>
+        ${simpleTable(["Табельный №", "ФИО", "Должность", "Статус"], employees.map(x => [
+          escapeHtml(x.personnelNumber), escapeHtml(x.fullName), escapeHtml(x.position), badge(x.status)
+        ]))}
+      </div>
+      <div class="details-section">
+        <h3 class="h6">Техника и имущество</h3>
+        ${simpleTable(["Наименование", "Инв. №", "Количество", "Состояние"], equipment.map(x => [
+          escapeHtml(x.name), escapeHtml(x.inventoryNumber || "—"), x.quantity, badge(x.condition)
+        ]))}
+      </div>
+      <div class="details-section">
+        <h3 class="h6">Оповещения</h3>
+        ${simpleTable(["Дата", "Сообщение", "Статус"], notifications.map(x => [
+          new Date(x.createdAt).toLocaleString("ru-RU"), escapeHtml(x.message), badge(x.status)
+        ]))}
+      </div>
+    `;
+
+    detailsModal.show();
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
+
+function simpleTable(headers, rows) {
+  if (!rows.length) return '<div class="text-secondary small">Нет данных</div>';
+
+  return `
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr>${headers.map(x => `<th>${x}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function toast(message, error = false) {

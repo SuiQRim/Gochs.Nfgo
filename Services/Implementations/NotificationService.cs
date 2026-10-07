@@ -33,7 +33,7 @@ public class NotificationService : INotificationService
     public async Task<NotificationDto> GetByIdAsync(int id)
     {
         var entity = await notificationRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Notification with id {id} was not found.");
+            ?? throw new NotFoundException($"Оповещение с id {id} не найдено.");
 
         return entity.ToDto();
     }
@@ -45,8 +45,8 @@ public class NotificationService : INotificationService
         var entity = new Notification
         {
             FormationId = dto.FormationId,
-            Message = dto.Message.Trim(),
-            CreatedBy = dto.CreatedBy.Trim()
+            Message = RequireText(dto.Message, "Текст оповещения"),
+            CreatedBy = RequireText(dto.CreatedBy, "Автор оповещения")
         };
 
         await notificationRepository.AddAsync(entity);
@@ -56,15 +56,15 @@ public class NotificationService : INotificationService
     public async Task<NotificationDto> UpdateStatusAsync(int id, UpdateNotificationStatusDto dto)
     {
         var entity = await notificationRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Notification with id {id} was not found.");
+            ?? throw new NotFoundException($"Оповещение с id {id} не найдено.");
 
         var newStatus = dto.Status!.Value;
 
         if (entity.Status != NotificationStatus.Created)
-            throw new BusinessRuleException("Only notifications in Created status can be updated.");
+            throw new BusinessRuleException("Изменять можно только оповещение в статусе Created.");
 
         if (newStatus is not NotificationStatus.Sent and not NotificationStatus.Failed)
-            throw new BusinessRuleException("Notification can only transition from Created to Sent or Failed.");
+            throw new BusinessRuleException("Оповещение может перейти из Created только в Sent или Failed.");
 
         entity.Status = newStatus;
         await notificationRepository.UpdateAsync(entity);
@@ -75,6 +75,14 @@ public class NotificationService : INotificationService
     private async Task EnsureFormationExistsAsync(int id)
     {
         if (!await formationRepository.ExistsAsync(id))
-            throw new NotFoundException($"Formation with id {id} was not found.");
+            throw new NotFoundException($"Формирование с id {id} не найдено.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} не может быть пустым.");
+
+        return value.Trim();
     }
 }

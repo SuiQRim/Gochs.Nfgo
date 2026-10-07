@@ -41,7 +41,7 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeDto> GetByIdAsync(int id)
     {
         var entity = await employeeRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Employee with id {id} was not found.");
+            ?? throw new NotFoundException($"Сотрудник с id {id} не найден.");
 
         return entity.ToDto();
     }
@@ -49,17 +49,20 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeDto> CreateAsync(CreateEmployeeDto dto)
     {
         await EnsureUnitExistsAsync(dto.UnitId);
-        var personnelNumber = dto.PersonnelNumber.Trim();
+
+        var personnelNumber = RequireText(dto.PersonnelNumber, "Табельный номер");
+        var fullName = RequireText(dto.FullName, "ФИО сотрудника");
+        var position = RequireText(dto.Position, "Должность сотрудника");
 
         if (await employeeRepository.PersonnelNumberExistsAsync(personnelNumber))
-            throw new BusinessRuleException($"Personnel number '{personnelNumber}' is already in use.");
+            throw new BusinessRuleException($"Табельный номер '{personnelNumber}' уже используется.");
 
         var entity = new Employee
         {
             UnitId = dto.UnitId,
             PersonnelNumber = personnelNumber,
-            FullName = dto.FullName.Trim(),
-            Position = dto.Position.Trim(),
+            FullName = fullName,
+            Position = position,
             Phone = Normalize(dto.Phone)
         };
 
@@ -70,18 +73,21 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeDto> UpdateAsync(int id, UpdateEmployeeDto dto)
     {
         var entity = await employeeRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Employee with id {id} was not found.");
+            ?? throw new NotFoundException($"Сотрудник с id {id} не найден.");
 
         await EnsureUnitExistsAsync(dto.UnitId);
-        var personnelNumber = dto.PersonnelNumber.Trim();
+
+        var personnelNumber = RequireText(dto.PersonnelNumber, "Табельный номер");
+        var fullName = RequireText(dto.FullName, "ФИО сотрудника");
+        var position = RequireText(dto.Position, "Должность сотрудника");
 
         if (await employeeRepository.PersonnelNumberExistsAsync(personnelNumber, id))
-            throw new BusinessRuleException($"Personnel number '{personnelNumber}' is already in use.");
+            throw new BusinessRuleException($"Табельный номер '{personnelNumber}' уже используется.");
 
         entity.UnitId = dto.UnitId;
         entity.PersonnelNumber = personnelNumber;
-        entity.FullName = dto.FullName.Trim();
-        entity.Position = dto.Position.Trim();
+        entity.FullName = fullName;
+        entity.Position = position;
         entity.Phone = Normalize(dto.Phone);
         entity.Status = dto.Status!.Value;
 
@@ -92,7 +98,7 @@ public class EmployeeService : IEmployeeService
     public async Task DeleteAsync(int id)
     {
         var entity = await employeeRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Employee with id {id} was not found.");
+            ?? throw new NotFoundException($"Сотрудник с id {id} не найден.");
 
         await employeeRepository.DeleteAsync(entity);
     }
@@ -100,13 +106,21 @@ public class EmployeeService : IEmployeeService
     private async Task EnsureUnitExistsAsync(int id)
     {
         if (!await unitRepository.ExistsAsync(id))
-            throw new NotFoundException($"Unit with id {id} was not found.");
+            throw new NotFoundException($"Подразделение с id {id} не найдено.");
     }
 
     private async Task EnsureFormationExistsAsync(int id)
     {
         if (!await formationRepository.ExistsAsync(id))
-            throw new NotFoundException($"Formation with id {id} was not found.");
+            throw new NotFoundException($"Формирование с id {id} не найдено.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} не может быть пустым.");
+
+        return value.Trim();
     }
 
     private static string? Normalize(string? value) =>

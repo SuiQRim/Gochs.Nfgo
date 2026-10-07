@@ -30,7 +30,7 @@ public class UnitService : IUnitService
     public async Task<UnitDto> GetByIdAsync(int id)
     {
         var entity = await unitRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Unit with id {id} was not found.");
+            ?? throw new NotFoundException($"Подразделение с id {id} не найдено.");
 
         return entity.ToDto();
     }
@@ -42,7 +42,7 @@ public class UnitService : IUnitService
         var entity = new Unit
         {
             FormationId = dto.FormationId,
-            Name = dto.Name.Trim(),
+            Name = RequireText(dto.Name, "Название подразделения"),
             Purpose = Normalize(dto.Purpose),
             LeaderName = Normalize(dto.LeaderName)
         };
@@ -54,12 +54,12 @@ public class UnitService : IUnitService
     public async Task<UnitDto> UpdateAsync(int id, UpdateUnitDto dto)
     {
         var entity = await unitRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Unit with id {id} was not found.");
+            ?? throw new NotFoundException($"Подразделение с id {id} не найдено.");
 
         await EnsureFormationExistsAsync(dto.FormationId);
 
         entity.FormationId = dto.FormationId;
-        entity.Name = dto.Name.Trim();
+        entity.Name = RequireText(dto.Name, "Название подразделения");
         entity.Purpose = Normalize(dto.Purpose);
         entity.LeaderName = Normalize(dto.LeaderName);
 
@@ -70,13 +70,13 @@ public class UnitService : IUnitService
     public async Task DeleteAsync(int id)
     {
         var entity = await unitRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Unit with id {id} was not found.");
+            ?? throw new NotFoundException($"Подразделение с id {id} не найдено.");
 
         if (await unitRepository.HasEmployeesAsync(id))
-            throw new BusinessRuleException("Unit cannot be deleted while it contains employees.");
+            throw new BusinessRuleException("Нельзя удалить подразделение, пока в нём есть сотрудники.");
 
         if (await unitRepository.HasEquipmentAsync(id))
-            throw new BusinessRuleException("Unit cannot be deleted while it contains equipment.");
+            throw new BusinessRuleException("Нельзя удалить подразделение, пока в нём есть техника или имущество.");
 
         await unitRepository.DeleteAsync(entity);
     }
@@ -84,7 +84,15 @@ public class UnitService : IUnitService
     private async Task EnsureFormationExistsAsync(int id)
     {
         if (!await formationRepository.ExistsAsync(id))
-            throw new NotFoundException($"Formation with id {id} was not found.");
+            throw new NotFoundException($"Формирование с id {id} не найдено.");
+    }
+
+    private static string RequireText(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"{fieldName} не может быть пустым.");
+
+        return value.Trim();
     }
 
     private static string? Normalize(string? value) =>

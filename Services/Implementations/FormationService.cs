@@ -22,7 +22,7 @@ public class FormationService : IFormationService
     public async Task<FormationDetailsDto> GetByIdAsync(int id)
     {
         var formation = await formationRepository.GetDetailsAsync(id)
-            ?? throw new NotFoundException($"Formation with id {id} was not found.");
+            ?? throw new NotFoundException($"Формирование с id {id} не найдено.");
 
         return new FormationDetailsDto
         {
@@ -42,8 +42,8 @@ public class FormationService : IFormationService
 
     public async Task<FormationDto> CreateAsync(CreateFormationDto dto)
     {
-        var name = RequireText(dto.Name, "Formation name");
-        var location = RequireText(dto.Location, "Formation location");
+        var name = RequireText(dto.Name, "Название формирования");
+        var location = RequireText(dto.Location, "Место расположения формирования");
 
         var entity = new Formation
         {
@@ -61,12 +61,12 @@ public class FormationService : IFormationService
     public async Task<FormationDto> UpdateAsync(int id, UpdateFormationDto dto)
     {
         var entity = await formationRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Formation with id {id} was not found.");
+            ?? throw new NotFoundException($"Формирование с id {id} не найдено.");
 
-        entity.Name = RequireText(dto.Name, "Formation name");
+        entity.Name = RequireText(dto.Name, "Название формирования");
         entity.Type = dto.Type!.Value;
         entity.Purpose = Normalize(dto.Purpose);
-        entity.Location = RequireText(dto.Location, "Formation location");
+        entity.Location = RequireText(dto.Location, "Место расположения формирования");
         entity.LeaderName = Normalize(dto.LeaderName);
         entity.Status = dto.Status!.Value;
 
@@ -77,13 +77,13 @@ public class FormationService : IFormationService
     public async Task DeleteAsync(int id)
     {
         var entity = await formationRepository.GetByIdAsync(id)
-            ?? throw new NotFoundException($"Formation with id {id} was not found.");
+            ?? throw new NotFoundException($"Формирование с id {id} не найдено.");
 
         if (await formationRepository.HasUnitsAsync(id))
-            throw new BusinessRuleException("Formation cannot be deleted while it contains units.");
+            throw new BusinessRuleException("Нельзя удалить формирование, пока в нём есть подразделения.");
 
         if (await formationRepository.HasNotificationsAsync(id))
-            throw new BusinessRuleException("Formation cannot be deleted while it has notification history.");
+            throw new BusinessRuleException("Нельзя удалить формирование, пока у него есть история оповещений.");
 
         await formationRepository.DeleteAsync(entity);
     }
@@ -91,7 +91,7 @@ public class FormationService : IFormationService
     private static string RequireText(string value, string fieldName)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ValidationException($"{fieldName} cannot be empty.");
+            throw new ValidationException($"{fieldName} не может быть пустым.");
 
         return value.Trim();
     }
